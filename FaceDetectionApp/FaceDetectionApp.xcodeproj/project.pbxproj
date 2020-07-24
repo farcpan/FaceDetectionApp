@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA5A876224CAFE1700BD5BE7 /* VideoCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5A876124CAFE1700BD5BE7 /* VideoCapture.swift */; };
 		AAD9863A24CAF4E70079A033 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD9863924CAF4E70079A033 /* AppDelegate.swift */; };
 		AAD9863C24CAF4E70079A033 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD9863B24CAF4E70079A033 /* SceneDelegate.swift */; };
 		AAD9863E24CAF4E80079A033 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD9863D24CAF4E80079A033 /* ViewController.swift */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AA5A876124CAFE1700BD5BE7 /* VideoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCapture.swift; sourceTree = "<group>"; };
 		AAD9863624CAF4E70079A033 /* FaceDetectionApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceDetectionApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAD9863924CAF4E70079A033 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AAD9863B24CAF4E70079A033 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -43,6 +45,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AA5A876024CAFE0200BD5BE7 /* Video */ = {
+			isa = PBXGroup;
+			children = (
+				AA5A876124CAFE1700BD5BE7 /* VideoCapture.swift */,
+			);
+			path = Video;
+			sourceTree = "<group>";
+		};
 		AAD9862D24CAF4E70079A033 = {
 			isa = PBXGroup;
 			children = (
@@ -62,6 +72,7 @@
 		AAD9863824CAF4E70079A033 /* FaceDetectionApp */ = {
 			isa = PBXGroup;
 			children = (
+				AA5A876024CAFE0200BD5BE7 /* Video */,
 				AAD9864F24CAF6850079A033 /* Model */,
 				AAD9865424CAF6F20079A033 /* Utility */,
 				AAD9863924CAF4E70079A033 /* AppDelegate.swift */,
@@ -164,6 +175,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AAD9863E24CAF4E80079A033 /* ViewController.swift in Sources */,
+				AA5A876224CAFE1700BD5BE7 /* VideoCapture.swift in Sources */,
 				AAD9865324CAF6C30079A033 /* PostProcess.swift in Sources */,
 				AAD9865124CAF6990079A033 /* face_detector.mlmodel in Sources */,
 				AAD9865624CAF7030079A033 /* BoundingBox.swift in Sources */,

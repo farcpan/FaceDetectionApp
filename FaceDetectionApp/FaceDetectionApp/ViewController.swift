@@ -7,95 +7,81 @@ import AVFoundation
 import CoreImage
 import CoreML
 import UIKit
-import Vision
+import VideoToolbox
 
 class ViewController: UIViewController {
     // MARK: - UI
     @IBOutlet weak var cameraView: UIImageView!
+    @IBOutlet weak var predictionTImeLabel: UILabel!
+    var boundingBoxes: [BoundingBox] = []
     
     // MARK: - Camera
-    var captureSession = AVCaptureSession()
-    var camera: AVCaptureDevice?
-    var photoOutput: AVCapturePhotoOutput?
-    var cameraPreviewLayer: AVCaptureVideoPreviewLayer?
+    var videoCapture: VideoCapture!
+    let semaphore = DispatchSemaphore(value: 2)
     
     // MARK:  - AI Model
     let imageWidth = 320
     let imageHeight = 240
     let maxDetection = 200
-    
     let model = face_detector()
     let postProcess = PostProcess()
     
-    // MARK: - BoundingBox
-    var boundingBoxes: [BoundingBox] = []
+    // MARK: - ライフサイクル
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // 顔検出領域矩形初期化
+        self.setUpBoundingBoxes()
+        // カメラ設定
+        self.setupCamera()
+    }
     
+    // MARK: - Bounding Box
     func setUpBoundingBoxes() {
         for _ in 0..<self.maxDetection {
             self.boundingBoxes.append(BoundingBox())
         }
     }
-    
-    // MARK: - ライフサイクル
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        
-        // カメラ設定
-        self.setupCaptureSession()
-        self.setupDevice()
-        self.setupInputOutput()
-        self.setupPreviewLayer()
-        
-        // BoundingBox設定
-        self.setUpBoundingBoxes()
-        for box in self.boundingBoxes {
-            box.addToLayer(self.cameraView.layer)
+
+    // MARK: - カメラ設定
+    func setupCamera() {
+        self.videoCapture = VideoCapture()
+        self.videoCapture.delegate = self
+        self.videoCapture.fps = 30
+        self.videoCapture.setup(sessionPreset: AVCaptureSession.Preset.vga640x480) { success in
+            if success {
+                // Add the video preview into the UI.
+                if let previewLayer = self.videoCapture.previewLayer {
+                    self.cameraView.layer.addSublayer(previewLayer)
+                    self.videoCapture.previewLayer?.frame = self.cameraView.bounds
+                }
+                
+                // BoundingBox設定
+                for box in self.boundingBoxes {
+                    box.addToLayer(self.cameraView.layer)
+                }
+                
+                // 動画フレーム取得開始
+                self.videoCapture.start()
+            }
         }
-        
-        // カメラ処理開始
-        self.captureSession.startRunning()
-    }
-    
-    // MARK: - イベント
-    /**
-     ボタンプッシュイベント
-     */
-    @IBAction func push(_ sender: Any) {
-        let settings = AVCapturePhotoSettings()
-        settings.flashMode = .auto
-        // settings.isAutoStillImageStabilizationEnabled = true
-        
-        self.photoOutput?.capturePhoto(with: settings, delegate: self as AVCapturePhotoCaptureDelegate)
     }
     
     // MARK: - 推論
     /**
      推論実行
      */
-    func predict(image: UIImage, width: Int, height: Int) {
-        let pixelBuffer = image.getPixelBuffer()
-        let mlarray = try! MLMultiArray(
-            shape: [1, NSNumber(value: 3), NSNumber(value: self.imageHeight), NSNumber(value: self.imageWidth)], dataType: MLMultiArrayDataType.float32
-        )
+    func predict(image: UIImage) {
+        let startTime = CACurrentMediaTime()
         
-        for i in 0..<3*imageHeight*imageWidth {
-            mlarray[i] = pixelBuffer[i] as NSNumber
-        }
+        // 画像リサイズ（w: 320, h: 240）
+        let resizedImage = image.resize(to: CGSize(width: self.imageWidth, height: self.imageHeight))
+        // 推論実行
+        let result_box = self.predictAndPostProcess(image: resizedImage)
         
-        if let output = try? self.model.prediction(input: mlarray)  {
-            var boxesArray: [Float] = []
-            var confidencesArray: [Float] = []
-            
-            for i in 0..<output.boxes.count {
-                boxesArray.append(Float(truncating: output.boxes[i]))
-            }
-            for i in 0..<output.scores.count {
-                confidencesArray.append(Float(truncating: output.scores[i]))
-            }
-            
-            let result_box = self.postProcess.predict(
-                width: width, height: height, confidences: confidencesArray, boxes: boxesArray, prob_threshold: 0.8)
+        // on MainThread
+        DispatchQueue.main.async {
+            let width = Int(self.cameraView.bounds.width)
+            let height = Int(self.cameraView.bounds.height)
             
             // BoundingBox
             let numOfBoundingBox = Int(result_box.count / 4)
@@ -107,90 +93,65 @@ class ViewController: UIViewController {
                 let y = result_box[i * 4 + 1] * Float(height)
                 let w = result_box[i * 4 + 2] * Float(width) - x
                 let h = result_box[i * 4 + 3] * Float(height) - y
-                let rect: CGRect = CGRect(x: Int(x), y: Int(y), width: Int(w), height: Int(h))
-                self.boundingBoxes[i].show(frame: rect, color: UIColor(red: 0.9, green: 0.1, blue: 0.1, alpha: 0.9))
+                
+                let rect: CGRect = CGRect(x: Int(x), y: Int(y), width: Int(w * 1.1), height: Int(h * 1.1))
+                self.boundingBoxes[i].show(frame: rect, color: UIColor(red: 0.75, green: 0.1, blue: 0.25, alpha: 0.9))
             }
+            
+            // 推論時間測定
+            self.predictionTImeLabel.text = String(format: "Elapsed time: %.5f seconds", CACurrentMediaTime() - startTime)
+            
+            // Release semaphore
+            self.semaphore.signal()
         }
     }
     
-    // MARK: - カメラ設定
-    /**
-     カメラ画質設定
-     */
-    func setupCaptureSession() {
-        captureSession.sessionPreset = AVCaptureSession.Preset.medium
-    }
-    
-    /**
-     カメラ初期設定
-     */
-    func setupDevice() {
-        let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [AVCaptureDevice.DeviceType.builtInWideAngleCamera],
-            mediaType: AVMediaType.video,
-            position: AVCaptureDevice.Position.unspecified
+    func predictAndPostProcess(image: UIImage) -> [Float] {
+        let pixelBuffer = image.getPixelBuffer()
+        let mlarray = try! MLMultiArray(
+            shape: [1, NSNumber(value: 3), NSNumber(value: self.imageHeight), NSNumber(value: self.imageWidth)], dataType: MLMultiArrayDataType.float32
         )
         
-        let devices = deviceDiscoverySession.devices
-        for device in devices {
-            if device.position == AVCaptureDevice.Position.back {
-                camera = device
-                break
+        for i in 0..<3*imageHeight*imageWidth {
+            mlarray[i] = pixelBuffer[i] as NSNumber
+        }
+        
+        guard let output = try? self.model.prediction(input: mlarray) else {
+            return [Float]()
+        }
+
+        var boxesArray: [Float] = []
+        var confidencesArray: [Float] = []
+        
+        for i in 0..<output.boxes.count {
+            boxesArray.append(Float(truncating: output.boxes[i]))
+        }
+        for i in 0..<output.scores.count {
+            confidencesArray.append(Float(truncating: output.scores[i]))
+        }
+        
+        return self.postProcess.predict(confidences: confidencesArray, boxes: boxesArray, prob_threshold: 0.8)
+    }
+}
+
+// MARK: - カメライベントデリゲート
+extension ViewController: VideoCaptureDelegate {
+    func videoCapture(_ capture: VideoCapture, didCaptureVideoFrame frame: UIImage?, timestamp: CMTime) {
+        // 動画フレーム排他制御
+        semaphore.wait()
+        
+        // 推論実行
+        if let uiImage = frame {
+            DispatchQueue.global().async {
+                self.predict(image: uiImage)
             }
         }
     }
-    
-    /**
-     カメラ入出力設定
-     */
-    func setupInputOutput() {
-        do {
-            let captureDeviceInput = try AVCaptureDeviceInput(device: camera!)
-            captureSession.addInput(captureDeviceInput)
-            photoOutput = AVCapturePhotoOutput()
-            photoOutput!.setPreparedPhotoSettingsArray(
-                [AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])],
-                completionHandler: nil)
-            
-            captureSession.addOutput(photoOutput!)
-        } catch {
-            print(error)
-        }
-    }
-    
-    /**
-     カメラプレビューレイヤー追加
-     */
-    func setupPreviewLayer() {
-        self.cameraPreviewLayer = AVCaptureVideoPreviewLayer(session: self.captureSession)
-        self.cameraPreviewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        self.cameraPreviewLayer?.connection?.videoOrientation = AVCaptureVideoOrientation.portrait
-        
-        self.cameraPreviewLayer?.frame = self.cameraView.frame
-        self.cameraView.layer.insertSublayer(self.cameraPreviewLayer!, at: 0)
-    }
 }
 
-//MARK: - カメライベントデリゲート
-extension ViewController: AVCapturePhotoCaptureDelegate {
-    /**
-     撮影した画像データが生成されたときに呼び出されるデリゲートメソッド
-     */
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        // 撮影した画像を取得
-        guard let imageData = photo.fileDataRepresentation() else { return }
-        // Data型をUIImageオブジェクトに変換
-        guard let uiImage = UIImage(data: imageData) else { return }
-        // 画像リサイズ
-        let resizedImage = uiImage.resize(to: CGSize(width: self.imageWidth, height: self.imageHeight))
-        // 推論実行
-        self.predict(image: resizedImage, width: Int(uiImage.size.width), height: Int(uiImage.size.height))
-    }
-}
-
-//MARK: - UIImage Extension
+// MARK: - UIImage Extension
 extension UIImage {
-    /*
+    /**
      UIImageをリサイズする
      */
     func resize(to newSize: CGSize) -> UIImage {
@@ -201,7 +162,9 @@ extension UIImage {
         return resizedImage
     }
     
-    
+    /**
+     PixelBufferをFloat配列に変換する
+     */
     func getPixelBuffer() -> [Float] {
         guard let cgImage = self.cgImage else {
             return []
