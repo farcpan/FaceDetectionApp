@@ -126,7 +126,7 @@ public class PostProcess {
         return result_box
     }
     
-    func predict(width: Int, height: Int, confidences: [Float], boxes: [Float], prob_threshold: Float) -> [Float] {
+    func predict(confidences: [Float], boxes: [Float], prob_threshold: Float) -> [Float] {
         let class_index = 1
 
         let probs = get_score_column(column: class_index, array: confidences)

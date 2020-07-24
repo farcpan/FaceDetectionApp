@@ -4,6 +4,7 @@
 
 ## Model files
 *.mlmodel
+*.onnx
 
 ## User settings
 xcuserdata/
