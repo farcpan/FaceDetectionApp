@@ -120,17 +120,7 @@ class ViewController: UIViewController {
             return [Float]()
         }
 
-        var boxesArray: [Float] = []
-        var confidencesArray: [Float] = []
-        
-        for i in 0..<output.boxes.count {
-            boxesArray.append(Float(truncating: output.boxes[i]))
-        }
-        for i in 0..<output.scores.count {
-            confidencesArray.append(Float(truncating: output.scores[i]))
-        }
-        
-        return self.postProcess.predict(confidences: confidencesArray, boxes: boxesArray, prob_threshold: 0.8)
+        return self.postProcess.predict(confidences: output.scores, boxes: output.boxes, prob_threshold: 0.8)
     }
 }
 
@@ -176,7 +166,7 @@ extension UIImage {
         let bytesPerPixel = 4
         let pixelData = cgImage.dataProvider!.data! as Data
 
-        var buf : [Float] = []
+        var buf: [Float] = []
         for c in 0..<3 {
             for i in 0..<height {
                 for j in 0..<width {

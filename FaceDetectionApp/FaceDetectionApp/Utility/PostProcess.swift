@@ -4,25 +4,12 @@
 //
 
 import Foundation
+import CoreML
 
 public class PostProcess {
-    private func get_score(id1: Int, id2: Int, array: [Float]) -> Float {
-        return array[id1 * 2 + id2]
-    }
-
-    private func get_box(id1: Int, id2: Int, array: [Float]) -> Float {
-        return array[id1 * 4 + id2]
-    }
-    
-    private func get_score_column(column: Int, array: [Float]) -> [Float] {
-        var tmp: [Float] = []
-        for i in 0..<4420 {
-            let value = get_score(id1: i, id2: column, array: array)
-            tmp.append(value)
-        }
-        return tmp
-    }
-
+    /**
+     2点の座標（left, top）および（right, bottom）で指定された矩形の面積を求める
+     */
     private func area_of(left: Float, top: Float, right: Float, bottom: Float) -> Float {
         var tmpWidth = right - left
         var tmpHeight = bottom - top
@@ -33,6 +20,11 @@ public class PostProcess {
         return tmpWidth * tmpHeight
     }
     
+    /**
+     2つの矩形のIOUを求める
+        - boxes0: 比較対象となる矩形リスト（サイズはリスト要素数N × 座標情報数=4）
+        - boxes1: 矩形（サイズは1 × 座標情報数=4）
+     */
     private func iou_of(boxes0: [Float], boxes1: [Float]) -> [Float] {
         // boxes0: N*4, boxes1: 1*4
         let boxSize = Int(boxes0.count / 4)
@@ -73,10 +65,17 @@ public class PostProcess {
         return iou
     }
     
+    /**
+     Float配列を昇順に並べ替えた結果のインデックス配列を取得する
+     例） [0.1, 0.5, 0.3, 0.2, 0.4] ---> [0, 3, 2, 4, 1]
+     */
     private func argsort(a : [Float]) -> [Int] {
         return a.enumerated().sorted(by: { $0.element < $1.element }).map({ $0.offset })
     }
     
+    /**
+     NMSを実行してBoundingBoxリストを取得する
+     */
     private func hard_nms(boxes: [Float], scores: [Float], iou_threshold: Float, candidate_size: Int) -> [Float] {
         var picked: [Int] = []
         var indexes = argsort(a: scores)
@@ -126,10 +125,9 @@ public class PostProcess {
         return result_box
     }
     
-    func predict(confidences: [Float], boxes: [Float], prob_threshold: Float) -> [Float] {
+    func predict(confidences: MLMultiArray, boxes: MLMultiArray, prob_threshold: Float) -> [Float] {
         let class_index = 1
-
-        let probs = get_score_column(column: class_index, array: confidences)
+        let probs = confidences.getColumn(column: class_index)
         
         var mask: [Bool] = []
         var subset_probs: [Float] = []
@@ -146,17 +144,41 @@ public class PostProcess {
         }
         
         var subset_boxes: [Float] = []
-        for i in 0..<4420 {
+        for i in 0..<boxes.shape[1].intValue {
             if mask[i] != true {
                 continue
             }
             
-            for j in 0..<4 {
-                let value = get_box(id1: i, id2: j, array: boxes)
+            for j in 0..<boxes.shape[2].intValue {
+                let value = boxes.getElement(id1: i, id2: j)
                 subset_boxes.append(value)
             }
         }
         
-        return self.hard_nms(boxes: subset_boxes, scores: subset_probs, iou_threshold: 0.1, candidate_size: 100)
+        return self.hard_nms(boxes: subset_boxes, scores: subset_probs, iou_threshold: 0.1, candidate_size: 30)
+    }
+}
+
+/**
+ 顔検出モデル出力用 MLMultiArray拡張メソッド
+ */
+extension MLMultiArray {
+    /**
+     MLMultiArray [1, N, m] の指定した要素を取り出す
+     */
+    func getElement(id1: Int, id2: Int) -> Float {
+        let unsafePointer = UnsafeMutablePointer<Float>(OpaquePointer(self.dataPointer))
+        return unsafePointer[id1 * self.shape[2].intValue + id2]
+    }
+    
+    /**
+     MLMultiArray [1, N, m] の指定した列（要素数N）を取り出す
+     */
+    func getColumn(column: Int) -> [Float] {
+        var tmp: [Float] = []
+        for i in 0..<self.shape[1].intValue {
+            tmp.append(self.getElement(id1: i, id2: column))
+        }
+        return tmp
     }
 }
