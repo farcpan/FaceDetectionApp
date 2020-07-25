@@ -6,7 +6,7 @@
 import Foundation
 import UIKit
 
-public class BoundingBox {
+class BoundingBox {
     let shapeLayer: CAShapeLayer
     
     init() {

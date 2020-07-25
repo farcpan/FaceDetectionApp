@@ -6,9 +6,9 @@
 import Foundation
 import CoreML
 
-public class PostProcess {
+class PostProcess {
     /**
-     2点の座標（left, top）および（right, bottom）で指定された矩形の面積を求める
+     Calculating the area of rectangle specified by (left, top) and (right, bottom).
      */
     private func area_of(left: Float, top: Float, right: Float, bottom: Float) -> Float {
         var tmpWidth = right - left
@@ -21,9 +21,9 @@ public class PostProcess {
     }
     
     /**
-     2つの矩形のIOUを求める
-        - boxes0: 比較対象となる矩形リスト（サイズはリスト要素数N × 座標情報数=4）
-        - boxes1: 矩形（サイズは1 × 座標情報数=4）
+     Calculating IOU of two rectangles.
+        - boxes0 : the rectangles to be compared with size Nx4 (N: the number of rectangles, 4: the number of coordinates of each rectangle)
+        - boxes1 : single rectangle with size 1x4
      */
     private func iou_of(boxes0: [Float], boxes1: [Float]) -> [Float] {
         // boxes0: N*4, boxes1: 1*4
@@ -66,15 +66,15 @@ public class PostProcess {
     }
     
     /**
-     Float配列を昇順に並べ替えた結果のインデックス配列を取得する
-     例） [0.1, 0.5, 0.3, 0.2, 0.4] ---> [0, 3, 2, 4, 1]
+     Sort argument (index) list of float list.
+     ex.) input: [0.1, 0.5, 0.3, 0.2, 0.4] ---> output: [0, 3, 2, 4, 1]
      */
     private func argsort(a : [Float]) -> [Int] {
         return a.enumerated().sorted(by: { $0.element < $1.element }).map({ $0.offset })
     }
     
     /**
-     NMSを実行してBoundingBoxリストを取得する
+     Executing NMS to get Bounding Boxes.
      */
     private func hard_nms(boxes: [Float], scores: [Float], iou_threshold: Float, candidate_size: Int) -> [Float] {
         var picked: [Int] = []
@@ -129,6 +129,8 @@ public class PostProcess {
         let class_index = 1
         let probs = confidences.getColumn(column: class_index)
         
+        print(probs)
+        
         var mask: [Bool] = []
         var subset_probs: [Float] = []
         
@@ -160,11 +162,13 @@ public class PostProcess {
 }
 
 /**
- 顔検出モデル出力用 MLMultiArray拡張メソッド
+ Extension methods for face detection model outputs
  */
 extension MLMultiArray {
     /**
-     MLMultiArray [1, N, m] の指定した要素を取り出す
+     Get the element from MLMultiArray with shape [1, N, m].
+        id1: [0, N-1]
+        id2: [0, m-1]
      */
     func getElement(id1: Int, id2: Int) -> Float {
         let unsafePointer = UnsafeMutablePointer<Float>(OpaquePointer(self.dataPointer))
@@ -172,7 +176,8 @@ extension MLMultiArray {
     }
     
     /**
-     MLMultiArray [1, N, m] の指定した列（要素数N）を取り出す
+     Get the column from MLMultiArray with shape [1, N, m].
+     This method results the array with shape [N].
      */
     func getColumn(column: Int) -> [Float] {
         var tmp: [Float] = []
