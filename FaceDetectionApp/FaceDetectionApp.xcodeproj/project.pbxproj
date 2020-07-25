@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA048C3224CC48D900265299 /* CVPixelBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA048C3124CC48D900265299 /* CVPixelBuffer.swift */; };
 		AA5A876224CAFE1700BD5BE7 /* VideoCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5A876124CAFE1700BD5BE7 /* VideoCapture.swift */; };
 		AAD9863A24CAF4E70079A033 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD9863924CAF4E70079A033 /* AppDelegate.swift */; };
 		AAD9863C24CAF4E70079A033 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD9863B24CAF4E70079A033 /* SceneDelegate.swift */; };
@@ -20,6 +21,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AA048C3124CC48D900265299 /* CVPixelBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CVPixelBuffer.swift; sourceTree = "<group>"; };
 		AA5A876124CAFE1700BD5BE7 /* VideoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCapture.swift; sourceTree = "<group>"; };
 		AAD9863624CAF4E70079A033 /* FaceDetectionApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceDetectionApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAD9863924CAF4E70079A033 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -99,6 +101,7 @@
 			children = (
 				AAD9865224CAF6C30079A033 /* PostProcess.swift */,
 				AAD9865524CAF7030079A033 /* BoundingBox.swift */,
+				AA048C3124CC48D900265299 /* CVPixelBuffer.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -177,6 +180,7 @@
 				AAD9863E24CAF4E80079A033 /* ViewController.swift in Sources */,
 				AA5A876224CAFE1700BD5BE7 /* VideoCapture.swift in Sources */,
 				AAD9865324CAF6C30079A033 /* PostProcess.swift in Sources */,
+				AA048C3224CC48D900265299 /* CVPixelBuffer.swift in Sources */,
 				AAD9865124CAF6990079A033 /* face_detector.mlmodel in Sources */,
 				AAD9865624CAF7030079A033 /* BoundingBox.swift in Sources */,
 				AAD9863A24CAF4E70079A033 /* AppDelegate.swift in Sources */,
