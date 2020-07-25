@@ -1,22 +1,18 @@
 # FaceDetectionApp
 
-顔検出iOSアプリケーション。iOS13以降のみ対応。
-
+Face detection application for iOS (>=iOS 13.0).
 
 ---
 
-## 使用手順
+## How to start project
 
-1. [pytorch_face_landmark](https://github.com/cunjian/pytorch_face_landmark)から[ONNXモデル](https://github.com/cunjian/pytorch_face_landmark/blob/master/models/onnx/version-RFB-320.onnx)を入手する。
-
-1. ONNXモデルをCoreMLモデルに変換する。
-
+1. Convert `ONNX` model to CoreML model. You can get `ONNX` model file (`version-RFB-320.onnx`) from [pytorch_face_landmark](https://github.com/cunjian/pytorch_face_landmark). 
     ```
     $ cd Converter
-    $ python convert.py <ONNX Model Path>/version-RFB-320.onnx
+    $ python convert.py ./version-RFB-320.onnx
     $ mv face_detector.mlmodel ../FaceDetectionApp/FaceDetectionApp/Model/
     ```
 
-1. iOSアプリケーションプロジェクトをビルドする。
+1. Build iOS Project. 
 
 ---

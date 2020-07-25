@@ -4,10 +4,6 @@
 
 .DS_Store
 
-## Model files
-*.mlmodel
-*.onnx
-
 ## User settings
 xcuserdata/
 

@@ -20,10 +20,21 @@ if __name__ == '__main__':
     else:
         model_onnx = onnx.load_model(model_path)
 
+        # preprocess
+        # each pixel range: [-1, 1]
+        preprocessing_args = {
+            'is_bgr': False, 
+            'red_bias': -1.0, 
+            'green_bias': -1.0, 
+            'blue_bias': -1.0, 
+            'image_scale': 2.0/255.0
+            }
+                      
         # conversion
         mlmodel = convert(model_onnx, 
-            model='regression', 
-            image_input_names=['image'], 
-            minimum_ios_deplyment_target='13')
+            mode='regression', 
+            preprocessing_args=preprocessing_args,
+            image_input_names=['input'],
+            minimum_ios_deployment_target='13')
 
         mlmodel.save('face_detector.mlmodel')
