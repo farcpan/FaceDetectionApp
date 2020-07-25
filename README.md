@@ -24,3 +24,16 @@ Face Detection model `version-RFB-320.onnx` has input with shape `[1, 3, 240, 32
 The conversion script (`Converter/convert.py`) includes the preprocessing to normalize input image pixel value range `[0, 255]` (for iOS) to `[-1, 1]` (for onnx model) by the `preprocessing_args` parameter for `convert` API in `onnx_coreml`. 
 
 ---
+
+## Reference
+
+### Model
+
+* [pytorch_face_landmark](https://github.com/cunjian/pytorch_face_landmark)
+
+### CoreML
+
+* [Unsupported axis 2 for softmax #571](https://github.com/onnx/onnx-coreml/issues/571)
+
+
+---
